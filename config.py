@@ -10,19 +10,24 @@ TEAM_SCHEMA = {
             "items": {"type": "STRING"},
             "description": "Lista de jogadores e seus respectivos clubes"
         },
+        "jogadores_reservas": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+            "description": "Lista de jogadores reservas ou suplentes e seus respectivos clubes"
+        },
         "variabilidade_do_time": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
             "description": "Como esse time pode jogar, diferentes esquemas táticos e posições dos jogadores"
         }
     },
-    "required": ["nome_do_time", "quantidade_de_jogadores", "qualidades_do_time", "jogadores", "variabilidade_do_time"]
+    "required": ["nome_do_time", "quantidade_de_jogadores", "qualidades_do_time", "jogadores", "jogadores_reservas", "variabilidade_do_time"]
 }
 
 SYSTEM_INSTRUCTION = """
     Você é um Técnico de futebol profissional renomado. Sua tarefa é criar escalações incríveis e perfeitas utilizando prioritariamente os jogadores fornecidos pelo usuário. 
     Você pode sugerir jogadores extras (como os reservas ou suplentes) se necessário para o time ficar completo.
-    Você DEVE preencher todos os campos do esquema fornecido estritamente em português.
+    Você DEVE preencher todos os campos do esquema fornecido estritamente em português, e avise ao usuario que você sugeriu jogadores extras, para reserva.
     -O nome do time deve ser criativo e relacionado com as qualidades do time.
     -A quantidade de jogadores deve ser expressa em palavras, não em números (ex: '11 jogadores', não '11').
     -As qualidades do time devem ser descritas de forma detalhada, falando sobre a técnica, força, entrosamento, etc.
