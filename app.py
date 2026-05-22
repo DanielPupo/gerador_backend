@@ -82,7 +82,7 @@ def generate():
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Erro ao gerar a escalçãp: {str(e)}"
+            "message": f"Erro ao gerar a escalção: {str(e)}"
         }), 500
 
 # Executa o servidor local
