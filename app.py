@@ -1,4 +1,4 @@
-# app.py (Parte 1)
+# app.py
 import os
 import json
 from flask import Flask, jsonify, request
@@ -7,39 +7,36 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# Importando o que criamos no outro arquivo:
+# Importando as configurações e o esquema estruturado do config.py
 from config import TEAM_SCHEMA, SYSTEM_INSTRUCTION
 
-# Carrega as variáveis de ambiente e inicia o Gemini
+# Carrega as variáveis de ambiente e inicia o cliente Gemini
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Inicializa o Flask
+# Inicializa o Flask com suporte a CORS (requisições de outras origens)
 app = Flask(__name__)
 CORS(app)
 
-# app.py (Parte 2)
-
 def generate_team(jogadores):
-    # Junta os jogadores enviados em uma única linha de texto
+    # Junta os jogadores enviados pelo usuário em uma única linha de texto
     lista_jogadores = ", ".join(jogadores)
     conteudo_prompt = f"Crie uma escalação utilizando obrigatoriamente estes jogadores: {lista_jogadores}."
     
-    # Faz a chamada para o modelo pedindo uma resposta estruturada em JSON
+    # Faz a chamada para o modelo gerando uma resposta estritamente estruturada em JSON
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=conteudo_prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION,
-            temperature=1.2, # Reduzido levemente de 1.8 para evitar respostas desconexas
-            response_mime_type="application/json", # Garante o retorno em JSON
-            response_schema=TEAM_SCHEMA             # Aplica as regras do seu config.py
+            temperature=1.2,                       # Ajustado para equilíbrio entre criatividade e estabilidade
+            response_mime_type="application/json", # Obriga o retorno no formato JSON string
+            response_schema=TEAM_SCHEMA             # Aplica as regras estruturais e chaves obrigatórias
         )
     )
+    # Retorna o texto puro gerado (que será uma string no formato JSON válido)
     return response.text
-
-# app.py (Parte 3)
 
 @app.route("/")
 def root():
@@ -53,7 +50,7 @@ def root():
 def generate():
     data = request.get_json()
     
-    # Validação 1: O JSON foi enviado?
+    # Validação 1: O JSON ou a chave 'jogadores' foram enviados?
     if not data or "jogadores" not in data:
         return jsonify({
             "status": "error",
@@ -62,18 +59,18 @@ def generate():
         
     jogadores = data.get("jogadores", [])
     
-    # Validação 2: É uma lista e possui no mínimo 11 itens?
+    # Validação 2: É uma lista e possui no mínimo 3 itens? (Mudado para aceitar testes menores se necessário)
     if not isinstance(jogadores, list) or len(jogadores) < 3:
         return jsonify({
             "status": "error",
-            "message": "Você precisa fornecer no mínimo 11 jogadores."
+            "message": "Você precisa fornecer no mínimo uma lista válida de jogadores."
         }), 400
     
     try:
-        # Pede para o Gemini gerar a escalação (retorna como string JSON)
+        # Pede para o Gemini gerar a escalação estruturada
         escalacao_json_string = generate_team(jogadores)
         
-        # Converte a string JSON em Dicionário Python para o Flask organizar a resposta
+        # Converte a string JSON em Dicionário nativo do Python
         escalacao_estruturada = json.loads(escalacao_json_string)
         
         return jsonify({
@@ -85,9 +82,9 @@ def generate():
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Erro ao gerar a escalção: {str(e)}"
+            "message": f"Erro ao gerar a escalação: {str(e)}"
         }), 500
 
-# Executa o servidor local
+# Executa o servidor local em modo debug
 if __name__ == "__main__":
     app.run(debug=True)
