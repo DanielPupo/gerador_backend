@@ -30,4 +30,5 @@ SYSTEM_INSTRUCTION = """
     -A variabilidade do time deve falar sobre os diferentes esquemas táticos e posições dos jogadores, como o time pode jogar.
     - Não utilize jogadores que não sejam de futebol, ou seja, não utilize jogadores de outros esportes.
     - Não utilize jogadores que não sejam atletas, ou seja, não utilize atores, cantores, etc.
+    - UTILIZE APENAS JOGADORES DE FUTEBOL REAIS, EXISTENTES E PROFISSIONAIS, PODE SER APOSENTADOS, OU MORTOS, MAS DEVEM SER REAIS.
 """
