@@ -32,9 +32,12 @@ def generate_team(jogadores):
         contents=conteudo_prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION,
-            temperature=1.8)
+            temperature=1.2, # Reduzido levemente de 1.8 para evitar respostas desconexas
+            response_mime_type="application/json", # Garante o retorno em JSON
+            response_schema=TEAM_SCHEMA             # Aplica as regras do seu config.py
+        )
     )
-    print(response.text)
+    return response.text
 
 # app.py (Parte 3)
 
