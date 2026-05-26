@@ -78,11 +78,11 @@ def generate_team(jogadores):
     try:
         # Faz a chamada para o modelo gerando uma resposta estritamente estruturada em JSON
         response = client.models.generate_content(
-            model="gemini-3-flash-preview",
+            model="gemini-3.1-flash-lite",
             contents=conteudo_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
-                temperature=1.2,                       
+                temperature=1.3,                       
                 response_mime_type="application/json",
                 response_schema=TEAM_SCHEMA # CORREÇÃO: Schema injetado para travar a estrutura do JSON
             )
