@@ -137,18 +137,27 @@ def generate():
         escalacao_estruturada = json.loads(escalacao_json_string)
         
         # Enriquecimento paralelo com fotos e estatísticas reais da API de futebol
+       # === BLOCO DE ENRIQUECIMENTO DE FOTOS BLINDADO ===
         dados_jogadores_reais = {}
         
+        def extrair_nome_puro(nome_com_clube):
+            # Substitui separadores comuns por uma barra vertical para dar split fácil
+            para_limpar = nome_com_clube.replace("(", "|").replace("-", "|").replace("–", "|")
+            # Pega apenas a primeira parte (o nome do atleta) e remove espaços inúteis
+            return para_limpar.split("|")[0].strip()
+
         # 1. Buscar fotos para os Titulares
         for jog_completo in escalacao_estruturada.get("jogadores", []):
-            nome_limpo = jog_completo.split("(")[0].strip()
+            nome_limpo = extrair_nome_puro(jog_completo)
+            print(f"DEBUG: Buscando na API-Sports por: '{nome_limpo}'") # Log de controle no terminal
             info_real = buscar_dados_api_football(nome_limpo)
             if info_real:
                 dados_jogadores_reais[jog_completo] = info_real
 
-        # CORREÇÃO: 2. Buscar fotos também para os Reservas/Suplentes sugeridos
+        # 2. Buscar fotos para os Reservas
         for jog_completo in escalacao_estruturada.get("jogadores_reservas", []):
-            nome_limpo = jog_completo.split("(")[0].strip()
+            nome_limpo = extrair_nome_puro(jog_completo)
+            print(f"DEBUG: Buscando na API-Sports por: '{nome_limpo}'") # Log de controle no terminal
             info_real = buscar_dados_api_football(nome_limpo)
             if info_real:
                 dados_jogadores_reais[jog_completo] = info_real
