@@ -2,7 +2,12 @@ import os
 import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
+
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError as exc:
+    raise RuntimeError("Dependência do Gemini não encontrada. Execute: pip install google-generativeai") from exc
+
 from config import GEMINI_API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION, TEAM_SCHEMA
 
 app = Flask(__name__)
@@ -50,4 +55,5 @@ def generate_team():
         return jsonify({"error": f"Ocorreu um erro inesperado no backend: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in {"1", "true", "yes", "on"}
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=debug_mode, use_reloader=False)
