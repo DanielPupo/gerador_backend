@@ -6,6 +6,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from google import genai
 from google.genai import types
+from google.genai.errors import ClientError
 from dotenv import load_dotenv
 
 from config import TEAM_SCHEMA, SYSTEM_INSTRUCTION
@@ -71,7 +72,10 @@ def generate_team():
         if not response.text:
             return jsonify({"status": "error", "message": "Resposta vazia da IA"}), 500
 
-        escalacao_estruturada = json.loads(response.text)
+        try:
+            escalacao_estruturada = json.loads(response.text)
+        except json.JSONDecodeError as exc:
+            return jsonify({"status": "error", "message": f"Resposta da IA em formato inválido: {exc}"}), 500
         dados_jogadores_reais = {}
 
         # Busca enriquecida de fotos para Titulares
@@ -94,6 +98,12 @@ def generate_team():
             "info_real_jogadores": dados_jogadores_reais
         }), 200
 
+    except ClientError as e:
+        status_code = getattr(e, "code", None) or 500
+        message = str(e)
+        if "RESOURCE_EXHAUSTED" in message or "quota" in message.lower() or "429" in message:
+            return jsonify({"status": "error", "message": "A API do Gemini excedeu a cota gratuita. Tente novamente mais tarde ou troque de modelo/chave."}), 429
+        return jsonify({"status": "error", "message": message}), status_code
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
