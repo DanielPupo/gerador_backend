@@ -1,42 +1,22 @@
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-ENV_PATH = Path(__file__).resolve().parent / ".env"
-load_dotenv(ENV_PATH)
-
-# Configurações da API do Gemini
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = "gemini-2.5-pro"
-
-SYSTEM_INSTRUCTION = """
-Você é o motor de inteligência por trás de um gerador de elencos táticos baseado estritamente na estética e mecânicas do modo Ultimate Team do jogo EA SPORTS FC (antigo FIFA). 
-Sua missão é receber uma requisição tática ou tema do usuário e montar um esquadrão perfeito e ultra-realista.
-
-REGRAS CRÍTICAS DE NEGÓCIO PARA EVITAR BUGS:
-1. VALIDAÇÃO DE ATLETAS EXISTENTES: Você NUNCA deve inventar jogadores ou utilizar nomes sugeridos pelo usuário que sejam fictícios, humorísticos ou desconhecidos. Utilize apenas jogadores de futebol reais, profissionais ativos (ou lendas consagradas do futebol que possuam cartas no jogo) que estejam presentes na base de dados internacional da API-Sports. Se o usuário sugerir um nome inválido ou desconhecido, ignore a sugestão dele e substitua por um jogador real e famoso que se encaixe no contexto tático.
-2. CONSISTÊNCIA DE NOMES: Escreva os nomes dos jogadores e dos clubes em seu formato internacional padrão para maximizar a taxa de acerto na busca da API de fotos (ex: usar 'Vinícius Júnior' em vez de 'Vini', 'Manchester City' em vez de 'City').
-3. COMPOSIÇÃO DO ELENCO: O time principal deve ter EXATAMENTE 11 jogadores distribuídos perfeitamente conforme a formação tática escolhida. O banco de reservas deve conter EXATAMENTE 7 jogadores adicionais reais.
-4. ATRIBUTOS EA FC: Para cada jogador titular, atribua valores realistas de 1 a 99 para as 6 características principais do jogo de acordo com a posição (PAC, SHO, PAS, DRI, DEF, PHY) e determine um Overall (OVR) condizente. Selecione também um PlayStyle+ (ex: Finesse Shot+, Power Shot+, Intercept+, Whipped Pass+, Technical+).
-"""
+# config.py
 
 TEAM_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "nome_do_time": {"type": "STRING", "description": "Nome customizado para o elenco (ex: Galácticos EA, Samba Stars)."},
-        "formacao_tatica": {"type": "STRING", "description": "Formação clássica do EA FC (ex: 4-3-3, 4-2-3-1, 3-5-2, 4-4-2)."},
-        "quimica_total": {"type": "INTEGER", "description": "Química calculada do elenco de 0 a 33 baseada em ligas e nacionalidades comuns."},
-        "estilo_de_jogo": {"type": "STRING", "description": "Diretriz tática principal do time (ex: Tiki-Taka, Contra-Ataque Veloz, Pressão Alta)."},
+        "nome_do_time": {"type": "STRING", "description": "Nome criativo e personalizado para o elenco (ex: Galácticos FC)."},
+        "formacao_tatica": {"type": "STRING", "description": "Formação tática clássica do EA FC (ex: 4-3-3, 4-2-3-1, 3-5-2)."},
+        "quimica_total": {"type": "INTEGER", "description": "Química fictícia do elenco de 0 a 33 baseada em nacionalidades e ligas."},
+        "estilo_de_jogo": {"type": "STRING", "description": "Mentalidade tática (ex: Tiki-Taka, Contra-Ataque Veloz)."},
         "jogadores": {
             "type": "ARRAY",
             "items": {
                 "type": "OBJECT",
                 "properties": {
-                    "nome_completo": {"type": "STRING", "description": "Nome completo do jogador de futebol real."},
-                    "clube": {"type": "STRING", "description": "Nome oficial do clube atual do jogador."},
-                    "posicao_campo": {"type": "STRING", "description": "Sigla internacional da posição no EA FC (ex: GK, CB, LB, RB, CDM, CM, CAM, LW, RW, ST)."},
-                    "overall": {"type": "INTEGER", "description": "Pontuação geral de atributos do jogador (OVR) de 40 a 99."},
-                    "playstyle_plus": {"type": "STRING", "description": "Habilidade especial assinatura (ex: Finesse Shot+, Power Shot+, Intercept+, Jockey+)."},
+                    "nome_completo": {"type": "STRING", "description": "Nome completo do jogador real de futebol."},
+                    "clube": {"type": "STRING", "description": "Clube atual ou histórico do jogador."},
+                    "posicao_campo": {"type": "STRING", "description": "Sigla internacional da posição no EA FC (ex: GK, CB, CM, CAM, ST)."},
+                    "overall": {"type": "INTEGER", "description": "Overall (OVR) do jogador de 50 a 99."},
+                    "playstyle_plus": {"type": "STRING", "description": "Habilidade especial (ex: Finesse Shot+, Intercept+, Power Shot+)."},
                     "stats": {
                         "type": "OBJECT",
                         "properties": {
@@ -52,7 +32,7 @@ TEAM_SCHEMA = {
                 },
                 "required": ["nome_completo", "clube", "posicao_campo", "overall", "playstyle_plus", "stats"]
             },
-            "description": "Lista contendo exatamente 11 jogadores titulares mapeados na formação."
+            "description": "Lista contendo EXATAMENTE 11 jogadores titulares na ordem da formação."
         },
         "jogadores_reservas": {
             "type": "ARRAY",
@@ -66,13 +46,20 @@ TEAM_SCHEMA = {
                 },
                 "required": ["nome_completo", "clube", "posicao_campo", "overall"]
             },
-            "description": "Lista contendo exatamente 7 jogadores reservas de alto nível."
+            "description": "Lista contendo EXATAMENTE 7 jogadores reservas reais de alto nível."
         },
         "instrucoes_de_jogador": {
             "type": "ARRAY",
-            "items": {"type": "STRING"},
-            "description": "Diretrizes táticas para os jogadores (ex: 'Laterais: Ficar na Defesa', 'Atacantes: Chegar por Trás')."
+            "items": {"type": "STRING", "description": "Instruções individuais de jogo estilo prancheta do EA FC."}
         }
     },
     "required": ["nome_do_time", "formacao_tatica", "quimica_total", "estilo_de_jogo", "jogadores", "jogadores_reservas", "instrucoes_de_jogador"]
 }
+
+SYSTEM_INSTRUCTION = """
+Você é o motor de inteligência artificial de um simulador tático baseado no modo Ultimate Team do jogo EA SPORTS FC.
+Ao receber o comando do usuário, você deve montar um time competitivo seguindo estas diretrizes:
+1. VALIDAÇÃO DE JOGADORES: Use APENAS jogadores reais e profissionais que existam no banco de dados mundial do futebol. Se o usuário fornecer um jogador fictício, inventado ou desconhecido, substitua imediatamente por um atleta real de elite mundial correspondente à posição.
+2. ESTRUTURA: Retorne exatamente 11 titulares no objeto 'jogadores' e exatamente 7 reservas no objeto 'jogadores_reservas'.
+3. ATRIBUTOS E POSIÇÕES: Defina estatísticas condizentes de 1 a 99 e posições oficiais do EA FC (GK, CB, LB, RB, CDM, CM, CAM, RW, LW, ST).
+"""

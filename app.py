@@ -1,59 +1,101 @@
+# app.py
 import os
 import json
-from flask import Flask, request, jsonify
+import requests
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 
-try:
-    import google.generativeai as genai
-except ModuleNotFoundError as exc:
-    raise RuntimeError("Dependência do Gemini não encontrada. Execute: pip install google-generativeai") from exc
+from config import TEAM_SCHEMA, SYSTEM_INSTRUCTION
 
-from config import GEMINI_API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION, TEAM_SCHEMA
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+
+# Inicializa o cliente oficial da nova biblioteca do Google
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 CORS(app)
 
-# Inicialização da API do Gemini
-if not GEMINI_API_KEY:
-    raise ValueError("A chave GEMINI_API_KEY não foi encontrada no arquivo de ambiente (.env).")
+def buscar_dados_api_football(nome_jogador):
+    """ Busca a foto e dados reais do atleta usando a API-SPORTS """
+    if not RAPIDAPI_KEY:
+        return None
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(
-    model_name=MODEL_NAME,
-    generation_config={
-        "response_mime_type": "application/json",
-        "response_schema": TEAM_SCHEMA
-    },
-    system_instruction=SYSTEM_INSTRUCTION
-)
+    url = "https://v3.football.api-sports.io/players"
+    querystring = {"search": nome_jogador}
+    headers = {"x-apisports-key": RAPIDAPI_KEY}
+
+    try:
+        response = requests.get(url, headers=headers, params=querystring, timeout=10)
+        if response.status_code == 200:
+            dados = response.json()
+            if dados.get("results", 0) > 0:
+                player_info = dados["response"][0]["player"]
+                return {
+                    "photo": player_info.get("photo"),
+                    "id": player_info.get("id"),
+                    "nationality": player_info.get("nationality")
+                }
+    except Exception as e:
+        print(f"Erro ao consultar a API-Sports para {nome_jogador}: {e}")
+    return None
 
 @app.route("/", methods=["GET"])
-def health_check():
-    return jsonify({"status": "online", "message": "Gerador de Elencos EA FC rodando perfeitamente."}), 200
+def index():
+    return jsonify({"status": "online", "servico": "Gerador Tático EA FC"}), 200
 
 @app.route("/generate", methods=["POST"])
 def generate_team():
     try:
         data = request.get_json()
         if not data or "prompt" not in data:
-            return jsonify({"error": "O campo 'prompt' é obrigatório no corpo da requisição."}), 400
-        
-        user_prompt = data["prompt"]
-        
-        # Envia a requisição estruturada ao Gemini
-        response = model.generate_content(user_prompt)
-        
-        if not response.text:
-            return jsonify({"error": "A IA gerou uma resposta vazia. Tente novamente."}), 500
-            
-        team_data = json.loads(response.text)
-        return jsonify(team_data), 200
+            return jsonify({"status": "error", "message": "Faltando o campo prompt"}), 400
 
-    except json.JSONDecodeError:
-        return jsonify({"error": "Erro interno ao processar a estrutura JSON retornada pela IA."}), 500
+        user_prompt = data["prompt"]
+
+        # Chamada estruturada usando o SDK moderno
+        response = client.models.generate_content(
+            model='gemini-2.5-pro',
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=TEAM_SCHEMA,
+                system_instruction=SYSTEM_INSTRUCTION
+            ),
+        )
+
+        if not response.text:
+            return jsonify({"status": "error", "message": "Resposta vazia da IA"}), 500
+
+        escalacao_estruturada = json.loads(response.text)
+        dados_jogadores_reais = {}
+
+        # Busca enriquecida de fotos para Titulares
+        for player in escalacao_estruturada.get("jogadores", []):
+            nome = player.get("nome_completo")
+            info = buscar_dados_api_football(nome)
+            if info:
+                dados_jogadores_reais[nome] = info
+
+        # Busca enriquecida de fotos para Reservas
+        for player in escalacao_estruturada.get("jogadores_reservas", []):
+            nome = player.get("nome_completo")
+            info = buscar_dados_api_football(nome)
+            if info:
+                dados_jogadores_reais[nome] = info
+
+        return jsonify({
+            "status": "success",
+            "dados_escalacao": escalacao_estruturada,
+            "info_real_jogadores": dados_jogadores_reais
+        }), 200
+
     except Exception as e:
-        return jsonify({"error": f"Ocorreu um erro inesperado no backend: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in {"1", "true", "yes", "on"}
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=debug_mode, use_reloader=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
