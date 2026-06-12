@@ -1,38 +1,37 @@
-# config.py
+# config.py - Evolução EA FC Edition
 
-# Dicionário que mapeia e instrui o Gemini a responder de forma estritamente estruturada
 TEAM_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "nome_do_time": {
-            "type": "STRING", 
-            "description": "O nome criativo, imponente e personalizado da escalação ou time"
-        },
-        "quantidade_de_jogadores": {
-            "type": "STRING", 
-            "description": "Quantidade de jogadores totais detalhada por extenso (ex: '11 jogadores titulares e 5 reservas')"
-        },
-        "qualidades_do_time": {
-            "type": "STRING", 
-            "description": "Descrição detalhada sobre a técnica, velocidade, força e entrosamento tático do time"
-        },
+        "nome_do_time": {"type": "STRING", "description": "Nome do Squad (ex: Galácticos FC, Samba Boys)"},
+        "formacao_tatica": {"type": "STRING", "description": "A formação ideal do meta do EA FC (ex: 4-3-3, 4-2-3-1, 3-5-2)"},
+        "quimica_total": {"type": "INTEGER", "description": "Cálculo fictício de química do elenco de 0 a 33"},
+        "estilo_de_jogo": {"type": "STRING", "description": "Mentalidade tática (ex: Tiki-Taka, Contra-Ataque Veloz, Pressão Constante)"},
         "jogadores": {
             "type": "ARRAY",
-            "items": {"type": "STRING"},
-            "description": "Lista contendo EXATAMENTE 11 jogadores titulares da escalação principal organizada por ordem de posição (Goleiro primeiro)"
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "nome_completo": {"type": "STRING", "description": "Nome (Clube) ex: Erling Haaland (Manchester City)"},
+                    "posicao_campo": {"type": "STRING", "description": "Sigla da posição no EA FC (ex: GK, CB, LB, CM, CAM, RW, ST)"},
+                    "playstyle_plus": {"type": "STRING", "description": "A habilidade assinatura do jogador (ex: Finesse Shot+, Power Shot+, Whipped Pass+)"}
+                },
+                "required": ["nome_completo", "posicao_campo", "playstyle_plus"]
+            },
+            "description": "Lista com exatamente 11 jogadores titulares na ordem da formação escolhida."
         },
         "jogadores_reservas": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "Lista de jogadores reservas ou suplentes extras sugeridos por você para complementar o elenco"
+            "description": "Lista de até 7 suplentes com o formato Nome (Clube)"
         },
-        "variabilidade_do_time": {
+        "instrucoes_de_jogador": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "Lista de instruções sobre variações de esquemas táticos possíveis e comportamento da equipe em campo"
+            "description": "Instruções individuais cruciais (ex: 'Laterais: Ficar na defesa', 'Atacante: Chegar por trás')"
         }
     },
-    "required": ["nome_do_time", "quantidade_de_jogadores", "qualidades_do_time", "jogadores", "jogadores_reservas", "variabilidade_do_time"]
+    "required": ["nome_do_time", "formacao_tatica", "quimica_total", "estilo_de_jogo", "jogadores", "jogadores_reservas", "instrucoes_de_jogador"]
 }
 
 SYSTEM_INSTRUCTION = """

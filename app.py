@@ -30,7 +30,7 @@ def buscar_dados_api_football(nome_jogador):
         return None
 
     # URL oficial direta do fornecedor original
-    url = "https://v3.football.api-sports.io/players"
+    url = "https://gerador-backend-bice.vercel.app/"
     querystring = {"search": nome_jogador}
     
     # Cabeçalho padrão do provedor direto api-sports
